@@ -1,0 +1,9 @@
+en:
+  waddap: "Welcome to built.io!"
+  required_parameter: "%{param} is a required parameter"
+  not_initialized: "Library is not initialized"
+  objects:
+    class_uid: "class_uid needs to be provided when initializing an object"
+    uid_not_set: "uid for this object needs to be set before attempting to fetch it"
+  querying:
+    class_uid: "class_uid needs to be provided to query for objects"
