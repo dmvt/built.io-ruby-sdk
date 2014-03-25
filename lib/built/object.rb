@@ -48,10 +48,7 @@ module Built
         headers = {}
 
         headers[:timeless] = true if options[:timeless]
-
-        if options[:draft]
-          self["published"] = false
-        end
+        self["published"] = false if options[:draft]
 
         # update
         self.merge!(

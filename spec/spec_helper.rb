@@ -7,6 +7,5 @@ RSpec.configure do |c|
   }
 
   c.before do
-    puts "yo"
   end
 end

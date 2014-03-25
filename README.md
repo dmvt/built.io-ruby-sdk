@@ -3,6 +3,12 @@
 built.io is a Backend-as-a-Service. This is the ruby SDK providing convenient
 wrappers for working with built.io.
 
+## Installing
+
+```ruby
+gem install built.io
+```
+
 ## Getting Started
 
 Call the `init` method on `Built` to initialize the SDK with your

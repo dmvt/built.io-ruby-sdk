@@ -33,8 +33,7 @@ module Built
         )
       end
 
-      private
-
+      # @api private
       def uri
         "/applications/myapp" # no longer require a valid uid to get the application
       end
