@@ -1,6 +1,6 @@
 module Built
   # Built::Object is the unit of data in built.io
-  class Object < Hash
+  class Object < DirtyHashy
     include Built::Timestamps
 
     # Get the uid for this object
@@ -17,13 +17,13 @@ module Built
     # Fetch the latest instance of this object from built
     # @raise BuiltError If the uid is not set
     # @return [Object] self
-    def fetch
+    def sync
       if !uid
         # uid is not set
         raise BuiltError, I18n.t("objects.uid_not_set")
       end
 
-      self.merge!(
+      instantiate(
         Built.client.request(uri)
           .parsed_response["object"]
       )
@@ -40,7 +40,7 @@ module Built
     def save(options={})
       if is_new?
         # create
-        self.merge!(
+        instantiate(
           Built.client.request(uri, :post, wrap)
             .parsed_response["object"]
         )
@@ -51,7 +51,7 @@ module Built
         self["published"] = false if options[:draft]
 
         # update
-        self.merge!(
+        instantiate(
           Built.client.request(uri, :put, wrap, nil, headers)
             .parsed_response["object"]
         )
@@ -98,9 +98,16 @@ module Built
       @class_uid  = class_uid
 
       if data
-        self.merge!(data)
+        instantiate(data)
       end
 
+      self
+    end
+
+    # @api private
+    def instantiate(data)
+      replace(data)
+      clean_up!
       self
     end
 
@@ -115,7 +122,8 @@ module Built
     end
 
     def wrap
-      {"object" => self}
+      changed_keys = self.changes.keys
+      {"object" => self.select {|o| changed_keys.include?(o)}}
     end
 
     def to_s
@@ -123,6 +131,11 @@ module Built
     end
 
     class << self
+      def instantiate(data)
+        doc = new
+        doc.instantiate(data)
+      end
+
       # @api private
       def uri(class_uid)
         class_uri = Built::Class.uri(class_uid)

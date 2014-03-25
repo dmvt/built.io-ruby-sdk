@@ -1,5 +1,5 @@
 module Built
-  class Application < Hash
+  class Application < DirtyHashy
     include Built::Timestamps
 
     # Get the uid of this application
@@ -24,10 +24,17 @@ module Built
     end
 
     class << self
+      def instantiate(data)
+        doc = new
+        doc.replace(data)
+        doc.clean_up!
+        doc
+      end
+
       # Get the application you are working with
       # @return [Application]
       def get
-        new.merge!(
+        instantiate(
           Built.client.request(uri)
             .parsed_response["application"]
         )

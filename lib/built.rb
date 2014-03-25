@@ -1,5 +1,6 @@
 require "i18n"
 require "httmultiparty"
+require "dirty_hashy"
 
 module Built
   class << self

@@ -1,7 +1,7 @@
 module Built
   # Built::Class provides the schema and provides grouping for 
   # different classes of objects.
-  class Class < Hash
+  class Class < DirtyHashy
     include Built::Timestamps
 
     # Get the uid for this class
@@ -27,12 +27,19 @@ module Built
     end
 
     class << self
+      def instantiate(data)
+        doc = new
+        doc.replace(data)
+        doc.clean_up!
+        doc
+      end
+
       # Get all classes from built. Returns an array of classes.
       # @raise Built::BuiltAPIError
       # @return [Array] classes An array of classes
       def get_all
         Built.client.request(uri)
-          .parsed_response["classes"].map {|o| new.merge!(o)}
+          .parsed_response["classes"].map {|o| instantiate(o)}
       end
 
       # Get a single class by its uid
@@ -40,7 +47,7 @@ module Built
       # @param [String] uid The uid of the class
       # @return [Class] class An instance of Built::Class
       def get(uid)
-        new.merge!(
+        instantiate(
           Built.client.request(uri(uid))
             .parsed_response["class"]
         )
