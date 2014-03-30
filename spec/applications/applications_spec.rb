@@ -1,16 +1,14 @@
 require "applications/stub"
 
-describe Built::Class do
+describe Built::Application do
   before(:each) do
     ApplicationsStub.stub
-
-    Built.init :application_api_key => SPEC_APP[:application_api_key]
   end
 
   it "should get application" do
     response = Built::Application.get
 
     expect(response).to be_an_instance_of Built::Application
-    response.api_key.should eq(SPEC_APP[:application_api_key])
+    response.api_key.should eq(Built::SPEC_APP[:application_api_key])
   end
 end

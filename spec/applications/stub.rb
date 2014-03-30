@@ -11,11 +11,11 @@ class ApplicationsStub
     end
 
     def stub_single_app
-      app_url = API_URI + Built::Application.uri
+      app_url = Built::API_URI + Built::Application.uri
       
       stub_request(:get, app_url)
         .with(:headers => {
-          "application_api_key" => SPEC_APP[:application_api_key]
+          "application_api_key" => Built::SPEC_APP[:application_api_key]
         })
         .to_return(
           :body => JSON.dump(@@app),

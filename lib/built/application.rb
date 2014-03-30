@@ -36,7 +36,7 @@ module Built
       def get
         instantiate(
           Built.client.request(uri)
-            .parsed_response["application"]
+            .json["application"]
         )
       end
 

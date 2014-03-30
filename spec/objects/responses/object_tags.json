@@ -1,0 +1,25 @@
+{
+    "notice": "Woot! Object updated successfully.",
+    "object": {
+        "ACL": {
+            "roles": [],
+            "users": [],
+            "others": {},
+            "can": [
+                "update",
+                "delete"
+            ]
+        },
+        "_metadata": null,
+        "app_user_object_uid": null,
+        "created_at": "2014-03-28T09:00:07.786Z",
+        "published": true,
+        "tags": [
+            "hey",
+            "wassup"
+        ],
+        "uid": "test",
+        "updated_at": "2014-03-29T14:09:09.504Z",
+        "_version": 1
+    }
+}

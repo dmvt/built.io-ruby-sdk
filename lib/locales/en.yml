@@ -5,5 +5,12 @@ en:
   objects:
     class_uid: "class_uid needs to be provided when initializing an object"
     uid_not_set: "uid for this object needs to be set before attempting to fetch it"
+    pull_require: "`pull_value` requires either `index` or `value` to be provided"
   querying:
     class_uid: "class_uid needs to be provided to query for objects"
+  datatypes:
+    not_match: "%{key} is not of the type %{type}"
+  users:
+    not_logged_in: "The user needs to be logged in order to log out"
+  uploads:
+    file_not_provided: "Before creating an upload, you need to set a file."

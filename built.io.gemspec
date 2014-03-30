@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   s.license     = 'MIT'
 
   s.add_runtime_dependency 'i18n', '0.6.1'
-  s.add_runtime_dependency 'httmultiparty', '0.3.10'
+  s.add_runtime_dependency 'rest-client', '1.6.7'
   s.add_runtime_dependency 'dirty_hashy', '0.2.1'
 
   s.add_development_dependency 'rspec'

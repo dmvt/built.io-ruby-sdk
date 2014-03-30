@@ -1,11 +1,13 @@
-require 'webmock/rspec'
+require "webmock/rspec"
+require "built"
 
 RSpec.configure do |c|
-  SPEC_APP = {
+  Built::SPEC_APP = {
     application_api_key:  "specapikey",
     master_key:           "specmasterkey"
   }
 
   c.before do
+    Built.init :application_api_key => Built::SPEC_APP[:application_api_key]
   end
 end

@@ -13,11 +13,11 @@ class ClassesStub
 
     def stub_single_class
       class_uid = "built_io_application_user_role"
-      class_url = API_URI + [Built::Class.uri, class_uid].join("/")
+      class_url = Built::API_URI + [Built::Class.uri, class_uid].join("/")
       
       stub_request(:get, class_url)
         .with(:headers => {
-          "application_api_key" => SPEC_APP[:application_api_key]
+          "application_api_key" => Built::SPEC_APP[:application_api_key]
         })
         .to_return(
           :body => JSON.dump({"class" => @@classes["classes"].find{|c| c["uid"] == class_uid}}),
@@ -28,11 +28,11 @@ class ClassesStub
     end
 
     def stub_all_classes
-      class_url = API_URI + Built::Class.uri
+      class_url = Built::API_URI + Built::Class.uri
 
       stub_request(:get, class_url)
         .with(:headers => {
-          "application_api_key" => SPEC_APP[:application_api_key]
+          "application_api_key" => Built::SPEC_APP[:application_api_key]
         })
         .to_return(
           :body => JSON.dump(@@classes),

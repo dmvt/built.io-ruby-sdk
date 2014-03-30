@@ -3,8 +3,6 @@ require "classes/stub"
 describe Built::Class do
   before(:each) do
     ClassesStub.stub
-
-    Built.init :application_api_key => SPEC_APP[:application_api_key]
   end
 
   it "should get list of classes" do

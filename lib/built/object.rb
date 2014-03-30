@@ -25,7 +25,7 @@ module Built
 
       instantiate(
         Built.client.request(uri)
-          .parsed_response["object"]
+          .json["object"]
       )
 
       self
@@ -35,27 +35,34 @@ module Built
     # @param [Hash] options Options
     # @option options [Boolean] :timeless Perform a timeless update
     # @option options [Boolean] :draft Save the object as draft
+    # @option options [Boolean] :include_owner Include the owner of the object in the response
+    # @option options [Boolean] :include Include a reference field in the response
     # @raise BuiltAPIError
     # @return [Object] self
     def save(options={})
+      headers = {}
+      query   = {}
+      unpublish if options[:draft]
+      query[:include_owner] = true if options[:include_owner]
+      query[:include]       = options[:include] if options[:include]
+
       if is_new?
         # create
         instantiate(
-          Built.client.request(uri, :post, wrap)
-            .parsed_response["object"]
+          Built.client.request(uri, :post, wrap, nil, headers)
+            .json["object"]
         )
       else
-        headers = {}
-
         headers[:timeless] = true if options[:timeless]
-        self["published"] = false if options[:draft]
 
         # update
         instantiate(
           Built.client.request(uri, :put, wrap, nil, headers)
-            .parsed_response["object"]
+            .json["object"]
         )
       end
+
+      self
     end
 
     # Delete this object
@@ -80,27 +87,294 @@ module Built
       Built::Class.get(@class_uid)
     end
 
+    # Assign references based on a condition
+    # Searches for objects in the referred class and adds them as references
+    # @param [String] path The reference field
+    # @param [Query] query The query to apply when searching
+    # @return [Object] self
+    def set_reference_where(path, query)
+      Util.type_check("path", path, String)
+      Util.type_check("query", query, Query)
+
+      self[path] = {
+        "WHERE" => query.params["query"]
+      }
+
+      self
+    end
+
+    # Set reference for a field
+    # The reference parameter can be an existing uid, an existing object,
+    # or a new object. New objects will be created inline before being assigned
+    # as references.
+    # @param [String] path The path of the reference
+    # @param [String, Object, Array<String>, Array<Object>] value The value to assign
+    def set_reference(path, value)
+      Util.type_check("path", path, String)
+      value = value.is_a?(Array) ? value : [value]
+
+      self[path] = value.map do |val|
+        case val.class
+        when String
+          val
+        when Built::Object
+          val.is_new? ? val : val.uid
+        else
+          nil
+        end
+      end.compact!
+
+      self
+    end 
+
+    # Decrement the value of a number field by the given number
+    # @param [String] path The number field
+    # @param [Fixnum] number The number to decrement
+    # @return [Object] self
+    def decrement(path, number=nil)
+      Util.type_check("path", path, String)
+      Util.type_check("number", number, Fixnum) if number
+
+      self[path] = {
+        "SUB" => number || 1
+      }
+
+      self
+    end
+
+    # Increment the value of a number field by the given number
+    # @param [String] path The number field
+    # @param [Fixnum] number The number to increment
+    # @return [Object] self
+    def increment(path, number=nil)
+      Util.type_check("path", path, String)
+      Util.type_check("number", number, Fixnum) if number
+
+      self[path] = {
+        "ADD" => number || 1
+      }
+
+      self
+    end
+
+    # Multiply the value of a number field by the given number
+    # @param [String] path The number field
+    # @param [Fixnum] number The number to multiply with
+    # @return [Object] self
+    def multiply(path, number)
+      Util.type_check("path", path, String)
+      Util.type_check("number", number, Fixnum)
+
+      self[path] = {
+        "MUL" => number
+      }
+
+      self
+    end
+
+    # Divide the value of a number field by the given number
+    # @param [String] path The number field
+    # @param [Fixnum] number The number to divide with
+    # @return [Object] selfs
+    def divide(path, number)
+      Util.type_check("path", path, String)
+      Util.type_check("number", number, Fixnum)
+
+      self[path] = {
+        "DIV" => number
+      }
+
+      self
+    end
+
+    # Update value at the given index for a multiple field
+    # @param [String] path The field name on which the operation is to be applied
+    # @param [#read] value Update the field with this value
+    # @param [Fixnum] index
+    # @return [Object] self
+    def update_value(path, value, index)
+      # TODO: convert these into operations that are transparently executed on save
+      # The user should be able to access the values transparently.
+      Util.type_check("path", path, String)
+      Util.type_check("index", index, Fixnum)
+
+      self[path] = {
+        "UPDATE" => {
+          "data" => value,
+          "index" => index
+        }
+      }
+
+      self
+    end
+
+    # Pull value from a multiple field
+    # @param [String] path The field name on which the operation is to be applied
+    # @param [#read] value Pull a certain value from the field
+    # @param [Fixnum] index Pull a certain index from the field
+    # @return [Object] self
+    def pull_value(path, value=nil, index=nil)
+      Util.type_check("path", path, String)
+      Util.type_check("index", index, Fixnum) if index
+
+      if value
+        value = value.is_a?(Array) ? value : [value]
+
+        self[path] = {
+          "PULL" => {
+            "data" => value
+          }
+        }
+      elsif index
+        self[path] = {
+          "PULL" => {
+            "index" => index
+          }
+        }
+      else
+        raise BuiltError, I18n.t("objects.pull_require")
+      end
+
+      self
+    end
+
+    # Push value into a multiple field
+    # @param [String] path The field name on which the operation is to be applied
+    # @param [#read] value Any value you wish to push
+    # @param [Fixnum] index The index at which to push
+    # @return [Object] self
+    def push_value(path, value, index=nil)
+      # TODO: also handle ability to push at nested multiples
+      Util.type_check("path", path, String)
+      Util.type_check("index", index, Fixnum) if index
+
+      value = value.is_a?(Array) ? value : [value]
+
+      self[path] = {
+        "PUSH" => {
+          "data" => value
+        }
+      }
+
+      if index
+        self[path]["PUSH"]["index"] = index
+      end
+
+      self
+    end
+
+    # Get the location object for this object
+    # @return [Location]
+    def location
+      loc = self[Built::LOCATION_PATH]
+      if loc
+        Location.new(loc[0], loc[1])
+      else
+        nil
+      end
+    end
+
+    # Set the location
+    # @param [Location] loc The location object to set
+    def location=(loc)
+      Util.type_check("loc", loc, Location)
+
+      self[Built::LOCATION_PATH] = loc.to_arr
+
+      self
+    end
+
+    # Get ACL
+    # @return [ACL]
+    def ACL
+      Built::ACL.new(self["ACL"])
+    end
+
+    # Set ACL
+    # @param [ACL] acl
+    # @return [Object] self
+    def ACL=(acl)
+      self["ACL"] = {
+        "disable" => acl.disabled,
+        "others" => acl.others,
+        "users" => acl.users,
+        "roles" => acl.roles
+      }
+
+      self
+    end
+
+    # Get the version this object is on
+    def version
+      self["_version"]
+    end
+
+    # Unpublish this object
+    # @return [Object] self
+    def unpublish
+      self["published"] = false
+      self
+    end
+
+    # Publish this object
+    # @return [Object] self
+    def publish
+      self["published"] = true
+      self
+    end
+
+    # Is this object published?
+    # @return [Boolean]
+    def is_published?
+      self["published"]
+    end
+
+    # Get tags for this object
+    def tags
+      self["tags"] || []
+    end
+
+    # Add new tags
+    # @param [Array<String>] tags An array of strings. Can also be a single tag.
+    # @return [Object] self
+    def add_tags(tags)
+      tags = tags.is_a?(Array) ? tags : [tags]
+      self["tags"] ||= []
+      self["tags"].concat(tags)
+      self
+    end
+
+    # Remove tags
+    # @param [Array<String>] tags An array of strings. Can also be a single tag.
+    # @return [Object] self
+    def remove_tags(tags)
+      tags = tags.is_a?(Array) ? tags : [tags]
+      self["tags"] ||= []
+      self["tags"] = self["tags"] - tags
+      self
+    end
 
     # Is this a new, unsaved object?
     # @return [Boolean]
     def is_new?
-      Util.blank?(self["uid"])
+      Util.blank?(uid)
     end
 
     # Initialize a new object
     # @param [String] class_uid The uid of the class to which this object belongs
-    # @param [Hash] data Data to initialize the object with
-    def initialize(class_uid, data=nil)
+    # @param [String] uid The uid of an existing object, if this is an existing object
+    def initialize(class_uid, uid=nil)
       if !class_uid
         raise BuiltError, I18n.t("objects.class_uid")
       end
 
       @class_uid  = class_uid
 
-      if data
-        instantiate(data)
+      if uid
+        self.uid = uid
       end
 
+      clean_up!
       self
     end
 
@@ -131,6 +405,7 @@ module Built
     end
 
     class << self
+      # @api private
       def instantiate(data)
         doc = new
         doc.instantiate(data)

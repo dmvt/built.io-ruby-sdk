@@ -39,7 +39,7 @@ module Built
       # @return [Array] classes An array of classes
       def get_all
         Built.client.request(uri)
-          .parsed_response["classes"].map {|o| instantiate(o)}
+          .json["classes"].map {|o| instantiate(o)}
       end
 
       # Get a single class by its uid
@@ -49,7 +49,7 @@ module Built
       def get(uid)
         instantiate(
           Built.client.request(uri(uid))
-            .parsed_response["class"]
+            .json["class"]
         )
       end
 

@@ -6,7 +6,7 @@ module Built
   # Errors thrown by the built.io API
   class BuiltAPIError < BuiltError
     attr_accessor :error_code
-    attr_accessor :error
+    attr_accessor :errors
     attr_accessor :error_message
 
     def initialize(response)
@@ -14,7 +14,7 @@ module Built
 
       if @response
         @error_code     = response["error_code"]
-        @error          = response["error"]
+        @errors         = response["errors"]
         @error_message  = response["error_message"]
       end
 

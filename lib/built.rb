@@ -1,5 +1,5 @@
 require "i18n"
-require "httmultiparty"
+require "rest-client"
 require "dirty_hashy"
 
 module Built
@@ -19,8 +19,8 @@ module Built
     def init(options)
       options ||= {}
 
-      host        = options[:host]    || API_URI
-      version     = options[:version] || API_VERSION
+      host        = options[:host]    || Built::API_URI
+      version     = options[:version] || Built::API_VERSION
       master_key  = options[:master_key]
       api_key     = options[:application_api_key]
       authtoken   = options[:authtoken]
@@ -67,3 +67,9 @@ require "built/application"
 require "built/class"
 require "built/object"
 require "built/query"
+require "built/location"
+require "built/acl"
+require "built/user"
+require "built/role"
+require "built/installation"
+require "built/upload"
