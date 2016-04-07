@@ -57,7 +57,7 @@ obj.destroy
 ## Querying objects
 
 ```ruby
-query = Query.new("people")
+query = Built::Query.new("people")
 query
   .containedIn("name", ["James"])
   .greaterThan("age", 30)
