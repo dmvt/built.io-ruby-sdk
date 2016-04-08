@@ -1,9 +1,5 @@
-require "inflecto"
-
 module Built
   class Util
-    include Inflecto
-
     class << self
       def blank?(value)
         value.respond_to?(:empty?) ? value.empty? : !value

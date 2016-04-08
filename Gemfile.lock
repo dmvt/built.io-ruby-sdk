@@ -1,16 +1,9 @@
-GIT
-  remote: https://github.com/Ptico/inflecto
-  revision: 5983e5f769a08829dc7a1678d4dceac190dd2b61
-  specs:
-    inflecto (0.1.0)
-
 PATH
   remote: .
   specs:
     built.io (0.9.0)
       faraday (~> 0.9)
       i18n
-      inflecto (~> 0.1)
       oj (~> 2)
 
 GEM
@@ -36,7 +29,6 @@ PLATFORMS
 DEPENDENCIES
   built.io!
   bundler
-  inflecto!
   pry
   rake (~> 11)
 

@@ -21,7 +21,6 @@ Gem::Specification.new do |s|
   s.add_dependency "i18n"
   s.add_dependency "faraday", "~> 0.9"
   s.add_dependency "oj", "~> 2"
-  s.add_dependency "inflecto", "~> 0.1"
 
   # TODO: bring back testing
   # s.add_development_dependency "rspec"
