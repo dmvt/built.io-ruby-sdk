@@ -1,34 +1,16 @@
 module Built
   # Built::Object is the unit of data in built.io
-  class Object < DirtyHashy
-    include Built::Timestamps
-
-    # Get the uid for this object
-    def uid
-      self["uid"]
-    end
-
-    # Set the uid for this object
+  class Object < BasicObject
+    # Get / Set the uid for this object
     # @param [String] uid A valid object uid
-    def uid=(uid)
-      self["uid"] = uid
-    end
+    proxy_method :uid, true
 
     # Fetch the latest instance of this object from built
     # @raise BuiltError If the uid is not set
     # @return [Object] self
     def sync
-      if !uid
-        # uid is not set
-        raise BuiltError, I18n.t("objects.uid_not_set")
-      end
-
-      instantiate(
-        Built.client.request(uri)
-          .json["object"]
-      )
-
-      self
+      raise BuiltError, I18n.t("objects.uid_not_set") if Util.blank?(uid)
+      instantiate(Built.client.request(uri).json["object"])
     end
 
     # Save / persist the object to built.io
@@ -40,44 +22,38 @@ module Built
     # @raise BuiltAPIError
     # @return [Object] self
     def save(options={})
-      headers = {}
-      query   = {}
+      headers, query = {}, {}
       unpublish if options[:draft]
       query[:include_owner] = true if options[:include_owner]
-      query[:include]       = options[:include] if options[:include]
+      query[:include] = options[:include] if options[:include]
 
       if is_new?
         # create
-        instantiate(
-          Built.client.request(uri, :post, wrap, nil, headers)
-            .json["object"]
-        )
+        instantiate Built
+          .client
+          .request(uri, :post, wrap, nil, headers)
+          .json["object"]
       else
+        # TODO: Possibly remove this... very it is needed
         headers[:timeless] = true if options[:timeless]
 
         # update
-        instantiate(
-          Built.client.request(uri, :put, wrap, nil, headers)
-            .json["object"]
-        )
+        instantiate Built
+          .client
+          .request(uri, :put, wrap, nil, headers)
+          .json["object"]
       end
 
       self
     end
 
     # Delete this object
-    # @raise BuiltError If the uid is not set
+    # @raise BuiltError If the object is not persisted
     # @return [Object] self
     def destroy
-      if !uid
-        # uid is not set
-        raise BuiltError, I18n.t("objects.uid_not_set")
-      end
-
+      raise BuiltError, I18n.t("objects.uid_not_set") if is_new?
       Built.client.request(uri, :delete)
-
       self.clear
-
       self
     end
 
@@ -96,10 +72,7 @@ module Built
       Util.type_check("path", path, String)
       Util.type_check("query", query, Query)
 
-      self[path] = {
-        "WHERE" => query.params["query"]
-      }
-
+      self[path] = {"WHERE" => query.params["query"]}
       self
     end
 
@@ -113,19 +86,21 @@ module Built
       Util.type_check("path", path, String)
       value = value.is_a?(Array) ? value : [value]
 
-      self[path] = value.map do |val|
-        case val.class
-        when String
-          val
-        when Built::Object
-          val.is_new? ? val : val.uid
-        else
-          nil
-        end
-      end.compact!
+      self[path] = value
+        .map { |val|
+          case val.class
+          when String
+            val
+          when Built::Object
+            val.is_new? ? val : val.uid
+          else
+            nil
+          end
+        }
+        .compact
 
       self
-    end 
+    end
 
     # Decrement the value of a number field by the given number
     # @param [String] path The number field
@@ -134,11 +109,7 @@ module Built
     def decrement(path, number=nil)
       Util.type_check("path", path, String)
       Util.type_check("number", number, Fixnum) if number
-
-      self[path] = {
-        "SUB" => number || 1
-      }
-
+      self[path] = {"SUB" => number || 1}
       self
     end
 
@@ -149,11 +120,7 @@ module Built
     def increment(path, number=nil)
       Util.type_check("path", path, String)
       Util.type_check("number", number, Fixnum) if number
-
-      self[path] = {
-        "ADD" => number || 1
-      }
-
+      self[path] = {"ADD" => number || 1}
       self
     end
 
@@ -164,11 +131,7 @@ module Built
     def multiply(path, number)
       Util.type_check("path", path, String)
       Util.type_check("number", number, Fixnum)
-
-      self[path] = {
-        "MUL" => number
-      }
-
+      self[path] = {"MUL" => number}
       self
     end
 
@@ -179,11 +142,7 @@ module Built
     def divide(path, number)
       Util.type_check("path", path, String)
       Util.type_check("number", number, Fixnum)
-
-      self[path] = {
-        "DIV" => number
-      }
-
+      self[path] = {"DIV" => number}
       self
     end
 
@@ -204,7 +163,6 @@ module Built
           "index" => index
         }
       }
-
       self
     end
 
@@ -213,7 +171,7 @@ module Built
     # @param [#read] value Pull a certain value from the field
     # @param [Fixnum] index Pull a certain index from the field
     # @return [Object] self
-    def pull_value(path, value=nil, index=nil)
+    def pull_value(path, value = nil, index = nil)
       Util.type_check("path", path, String)
       Util.type_check("index", index, Fixnum) if index
 
@@ -250,16 +208,8 @@ module Built
 
       value = value.is_a?(Array) ? value : [value]
 
-      self[path] = {
-        "PUSH" => {
-          "data" => value
-        }
-      }
-
-      if index
-        self[path]["PUSH"]["index"] = index
-      end
-
+      self[path] = {"PUSH" => {"data" => value}}
+      self[path]["PUSH"]["index"] = index unless Util.blank?(index)
       self
     end
 
@@ -278,9 +228,7 @@ module Built
     # @param [Location] loc The location object to set
     def location=(loc)
       Util.type_check("loc", loc, Location)
-
       self[Built::LOCATION_PATH] = loc.to_arr
-
       self
     end
 
@@ -364,15 +312,12 @@ module Built
     # @param [String] class_uid The uid of the class to which this object belongs
     # @param [String] uid The uid of an existing object, if this is an existing object
     def initialize(class_uid, uid=nil)
-      if !class_uid
+      unless Util.blank?(class_uid)
         raise BuiltError, I18n.t("objects.class_uid")
       end
 
-      @class_uid  = class_uid
-
-      if uid
-        self.uid = uid
-      end
+      @class_uid = class_uid
+      self.uid = uid unless Util.blank?(uid)
 
       clean_up!
       self
@@ -388,34 +333,29 @@ module Built
     private
 
     def uri
-      class_uri = Built::Class.uri(@class_uid)
-
-      uid ? 
-        [class_uri, "objects/#{uid}"].join("/") : 
-        [class_uri, "objects"].join("/")
+      parts = [Built::Class.uri(@class_uid)]
+      parts << (is_new? ? "objects" : "objects/#{uid}")
+      parts.join("/")
     end
 
     def wrap
       changed_keys = self.changes.keys
-      {"object" => self.select {|o| changed_keys.include?(o)}}
+      {:object => self.select { |o| changed_keys.include?(o) }}
     end
 
     def to_s
-      "#<Built::Object uid=#{self["uid"]}, class_uid=#{@class_uid}>"
+      "#<Built::Object uid=#{self[:uid]}, class_uid=#{@class_uid}>"
     end
 
     class << self
       # @api private
       def instantiate(data)
-        doc = new
-        doc.instantiate(data)
+        new(data)
       end
 
       # @api private
       def uri(class_uid)
-        class_uri = Built::Class.uri(class_uid)
-
-        [class_uri, "objects"].join("/")
+        "#{Built::Class.uri(class_uid)}/objects"
       end
     end
   end

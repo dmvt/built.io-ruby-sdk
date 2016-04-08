@@ -2,10 +2,6 @@ require "i18n"
 
 module Built
   class << self
-    # singleton http client
-    # @api private
-    @@client = nil
-
     # Initialize the SDK
     # @raise [BuiltError]
     # @param [Hash] options Options
@@ -13,44 +9,41 @@ module Built
     # @option options [String] :master_key Your app's master_key
     # @option options [String] :authtoken A user's authtoken
     # @option options [String] :host built.io API host (defaults to https://api.built.io)
-    # @option options [String] :version built.io version delimiter (v1, v2, etc)
+    # @option options [Logger] :logger A Logger (or compatible) instance
     def init(options)
       options ||= {}
 
-      host        = options[:host]    || Built::API_URI
-      version     = options[:version] || Built::API_VERSION
-      master_key  = options[:master_key]
-      api_key     = options[:application_api_key]
-      authtoken   = options[:authtoken]
+      host       = options[:host] || Built::API_URI
+      master_key = options[:master_key]
+      api_key    = options[:application_api_key]
+      authtoken  = options[:authtoken]
+      logger     = options[:logger]
 
       if Util.blank?(api_key)
-        raise BuiltError, I18n.t(
-          "required_parameter", {:param => "application_api_key"})
+        message = I18n.t("required_parameter", :param => "application_api_key")
+        raise BuiltError, message
       end
 
       # create the client
-      @@client = Client.new({
-        host:                 host,
-        version:              version,
-        application_api_key:  api_key,
-        master_key:           master_key,
-        authtoken:            authtoken
+      @client = Client.new({
+        :host => host,
+        :application_api_key => api_key,
+        :master_key => master_key,
+        :authtoken => authtoken,
+        :logger => logger
       })
     end
 
     # Get the singleton client
     # @api private
     def client
-      if !@@client
-        raise BuiltError, I18n.t("not_initialized")
-      end
-
-      @@client
+      raise BuiltError, I18n.t("not_initialized") unless Util.blank?(@client)
+      @client
     end
 
     # @api private
     def root
-      File.expand_path '..', __FILE__
+      File.expand_path "..", __FILE__
     end
   end
 end
@@ -60,7 +53,7 @@ require "built/i18n"
 require "built/util"
 require "built/error"
 require "built/client"
-require "built/timestamps"
+require "built/basic_object"
 require "built/application"
 require "built/class"
 require "built/object"

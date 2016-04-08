@@ -1,52 +1,33 @@
 require "uri"
 
 module Built
-  class Upload < DirtyHashy
-    include Built::Timestamps
-
-    # Get the uid for this upload
-    def uid
-      self["uid"]
-    end
-
-    # Set the uid for this upload
+  class Upload < BasicObject
+    # Get / Set the uid for this upload
     # @param [String] uid A valid upload uid
-    def uid=(uid)
-      self["uid"] = uid
-    end
+    proxy_method :uid, true
 
     # Set a new file
     # @param [File] file The file object to set
     def file=(file)
       Util.type_check("file", file, File)
 
-      self["upload"]  = file
-      @file_set       = file
+      self[:upload] = file
+      @file_set = file
 
       self
     end
 
     # URL for the upload
     # @return [String] url
-    def url
-      self["url"]
-    end
+    proxy_method :url
 
     # Fetch the latest instance of this upload from built
     # @raise BuiltError If the uid is not set
     # @return [Upload] self
     def sync
-      if !uid
-        # uid is not set
-        raise BuiltError, I18n.t("objects.uid_not_set")
-      end
+      raise BuiltError, I18n.t("objects.uid_not_set") if is_new?
 
-      instantiate(
-        Built.client.request(uri)
-          .json["upload"]
-      )
-
-      self
+      instantiate(Built.client.request(uri).json[:upload])
     end
 
     # Save / persist the upload to built.io
@@ -54,29 +35,27 @@ module Built
     # @raise BuiltAPIError
     # @return [Object] self
     def save(options={})
+      # TODO: This isn't going to work right now... need to allow client to
+      # handle non-JSON posting
       header = {"Content-Type" => "multipart/form-data"}
 
       if is_new?
-        unless @file_set
-          raise BuiltError, I18n.t("uploads.file_not_provided")
-        end
+        raise BuiltError, I18n.t("uploads.file_not_provided") unless @file_set
 
         # create
-        instantiate(
-          Built.client.request(uri, :post, wrap, nil, header)
-            .json["upload"]
-        )
+        instantiate Built
+          .client
+          .request(uri, :post, wrap, nil, header)
+          .json[:upload]
       else
         # update
-        instantiate(
-          Built.client.request(uri, :put, wrap, nil, header)
-            .json["upload"]
-        )
+        instantiate Built
+          .client
+          .request(uri, :put, wrap, nil, header)
+          .json[:upload]
       end
 
-      if @file_set
-        @file_set = nil
-      end
+      @file_set = nil if @file_set
 
       self
     end
@@ -85,29 +64,24 @@ module Built
     # @raise BuiltError If the uid is not set
     # @return [Upload] self
     def destroy
-      if !uid
-        # uid is not set
-        raise BuiltError, I18n.t("objects.uid_not_set")
-      end
+      raise BuiltError, I18n.t("objects.uid_not_set") if is_new?
 
       Built.client.request(uri, :delete)
-
       self.clear
-
       self
     end
 
     # Get tags for this upload
     def tags
-      self["tags"] || []
+      self[:tags] || []
     end
 
     # Add new tags
     # @param [Array] tags An array of strings. Can also be a single tag.
     def add_tags(tags)
       tags = tags.is_a?(Array) ? tags : [tags]
-      self["tags"] ||= []
-      self["tags"].concat(tags)
+      self[:tags] ||= []
+      self[:tags].concat(tags)
       self
     end
 
@@ -115,18 +89,15 @@ module Built
     # @param [Array] tags An array of strings. Can also be a single tag.
     def remove_tags(tags)
       tags = tags.is_a?(Array) ? tags : [tags]
-      self["tags"] ||= []
-      self["tags"] = self["tags"] - tags
+      self[:tags] ||= []
+      self[:tags] = self[:tags] - tags
       self
     end
 
     # Initialize a new upload
     # @param [String] uid The uid of an existing upload, if this is an existing upload
-    def initialize(uid=nil)
-      if uid
-        self.uid = uid
-      end
-
+    def initialize(uid = nil)
+      self.uid = uid if uid
       clean_up!
       self
     end
@@ -160,20 +131,19 @@ module Built
     private
 
     def uri
-      uid ? 
-        [self.class.uri, uid].join("/") : 
-        self.class.uri
+      parts = [self.class.uri]
+      parts << uid unless is_new?
+      parts.join("/")
     end
 
     def wrap
       data = {
-        "PARAM" => {"upload" => self.select {|key| key != "upload"}}.to_json
+        "PARAM" => Oj.dump(
+          {:upload => self.select {|key| key != :upload}}
+          :mode => :compat
+        )
       }
-
-      if @file_set
-        data["upload[upload]"] = self["upload"]
-      end
-
+      data["upload[upload]"] = self[:upload] if @file_set
       data
     end
 
@@ -189,8 +159,7 @@ module Built
 
     class << self
       def instantiate(data)
-        doc = new
-        doc.instantiate(data)
+        new.instantiate(data)
       end
 
       # @api private

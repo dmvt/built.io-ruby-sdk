@@ -7,21 +7,19 @@ module Built
     # @param [String] class_uid The uid of the class for querying
     # @example
     #   query = Query.new("people")
-    # 
+    #
     #   query
     #     .containedIn("name", ["James"])
     #     .greaterThan("age", 30)
     #     .include_count
-    # 
+    #
     #   result = query.exec
-    # 
+    #
     #   puts result.objects[0]
     #   puts result.count
-    def initialize(class_uid=nil)
-      @class_uid  = class_uid
-      @params     = {
-        "query" => {}
-      }
+    def initialize(class_uid = nil)
+      @class_uid = class_uid
+      @params = {:query => {}}
     end
 
     # Where given field matches value
@@ -29,8 +27,7 @@ module Built
     # @param [Object] value The value with which to match
     # @return [Query] self
     def where(field, value)
-      @params["query"][field] = value
-
+      @params[:query][field] = value
       self
     end
 
@@ -39,8 +36,7 @@ module Built
     # @param [Object] value The value
     # @return [Query] self
     def greater_than(field, value)
-      @params["query"][field] = {"$gt" => value}
-
+      @params[:query][field] = {:$gt => value}
       self
     end
 
@@ -49,8 +45,7 @@ module Built
     # @param [Object] value The value
     # @return [Query] self
     def greater_than_equal(field, value)
-      @params["query"][field] = {"$gte" => value}
-
+      @params[:query][field] = {:$gte => value}
       self
     end
 
@@ -59,8 +54,7 @@ module Built
     # @param [Object] value The value
     # @return [Query] self
     def less_than(field, value)
-      @params["query"][field] = {"$lt" => value}
-
+      @params[:query][field] = {:$lt => value}
       self
     end
 
@@ -69,8 +63,7 @@ module Built
     # @param [Object] value The value
     # @return [Query] self
     def less_than_equal(field, value)
-      @params["query"][field] = {"$lte" => value}
-
+      @params[:query][field] = {:$lte => value}
       self
     end
 
@@ -79,8 +72,7 @@ module Built
     # @param [Object] value The value
     # @return [Query] self
     def not_equal(field, value)
-      @params["query"][field] = {"$ne" => value}
-
+      @params[:query][field] = {:$ne => value}
       self
     end
 
@@ -88,8 +80,7 @@ module Built
     # @param [String] field The field by which to sort
     # @return [Query] self
     def ascending(field)
-      @params["asc"] = field
-
+      @params[:asc] = field
       self
     end
 
@@ -97,8 +88,7 @@ module Built
     # @param [String] field The field by which to sort
     # @return [Query] self
     def descending(field)
-      @params["desc"] = field
-
+      @params[:desc] = field
       self
     end
 
@@ -107,8 +97,7 @@ module Built
     # @param [Array] array An array of values
     # @return [Query] self
     def contained_in(field, array)
-      @params["query"][field] = {"$in" => array}
-
+      @params[:query][field] = {:$in => array}
       self
     end
 
@@ -117,8 +106,7 @@ module Built
     # @param [Array] array An array of values
     # @return [Query] self
     def not_contained_in(field, array)
-      @params["query"][field] = {"$nin" => array}
-
+      @params[:query][field] = {:$nin => array}
       self
     end
 
@@ -126,8 +114,7 @@ module Built
     # @param [String] field
     # @return [Query] self
     def exists(field)
-      @params["query"][field] = {"$exists" => true}
-
+      @params[:query][field] = {:$exists => true}
       self
     end
 
@@ -135,8 +122,7 @@ module Built
     # @param [String] field
     # @return [Query] self
     def not_exists(field)
-      @params["query"][field] = {"$exists" => false}
-
+      @params[:query][field] = {:$exists => false}
       self
     end
 
@@ -144,8 +130,7 @@ module Built
     # @param [String] field
     # @param [Query] query
     def in_query(field, query)
-      @params["query"][field] = {"$in_query" => query.params["query"]}
-
+      @params[:query][field] = {:$in_query => query.params[:query]}
       self
     end
 
@@ -153,8 +138,7 @@ module Built
     # @param [String] field
     # @param [Query] query
     def not_in_query(field, query)
-      @params["query"][field] = {"$nin_query" => query.params["query"]}
-
+      @params[:query][field] = {:$nin_query => query.params[:query]}
       self
     end
 
@@ -164,11 +148,11 @@ module Built
     # @param [String] key to match
     # @param [Query] query to execute on the class
     def select_query(field, class_uid, key, query)
-      @params["query"][field] = {
-        "$select" => {
-          "key" => key,
-          "class_uid" => class_uid,
-          "query" => query
+      @params[:query][field] = {
+        :$select => {
+          :key => key,
+          :class_uid => class_uid,
+          :query => query
         }
       }
 
@@ -181,26 +165,26 @@ module Built
     # @param [String] key to match
     # @param [Query] query to execute on the class
     def dont_select_query(field, class_uid, key, query)
-      @params["query"][field] = {
-        "$dont_select" => {
-          "key" => key,
-          "class_uid" => class_uid,
-          "query" => query
+      @params[:query][field] = {
+        :$dont_select => {
+          :key => key,
+          :class_uid => class_uid,
+          :query => query
         }
       }
 
       self
     end
 
-    # Get objects near a Location or an Object. 
+    # Get objects near a Location or an Object.
     # @param [Location, Object] location The location object or a Built::Object
     # @param [Fixnum] radius The radius in meters
     def near(location, radius)
-      @params["query"]["$near"] = {
-        "coords" => location.is_a?(Built::Location) ? location.to_arr : {
-          "object" => location.uid
+      @params[:query][:$near] = {
+        :coords => location.is_a?(Built::Location) ? location.to_arr : {
+          :object => location.uid
         },
-        "radius" => radius
+        :radius => radius
       }
 
       self
@@ -209,9 +193,9 @@ module Built
     # Get objects within a set of location points
     # @param [Array<Location, Object>] Set of location points
     def within(points)
-      @params["query"]["$within"] = points.map do |point|
+      @params[:query][:$within] = points.map do |point|
         point.is_a?(Built::Location) ? location.to_arr : {
-          "object" => location.uid
+          :object => location.uid
         }
       end
 
@@ -222,8 +206,7 @@ module Built
     # @param [Number] number
     # @return [Query] self
     def limit(number)
-      @params["limit"] = number
-
+      @params[:limit] = number
       self
     end
 
@@ -231,24 +214,21 @@ module Built
     # @param [Number] number
     # @return [Query] self
     def skip(number)
-      @params["skip"] = number
-
+      @params[:skip] = number
       self
     end
 
     # Return the count of objects instead of the result of the query
     # @return [Query] self
     def count
-      @params["count"] = true
-
+      @params[:count] = true
       self
     end
 
     # Include the count of objects matching the query in the result
     # @return [Query] self
     def include_count
-      @params["include_count"] = true
-
+      @params[:include_count] = true
       self
     end
 
@@ -256,33 +236,29 @@ module Built
     # @param [String] field The reference field to include
     # @return [Query] self
     def include(field)
-      @params["include"] ||= []
-      @params["include"] << field
-
+      @params[:include] ||= []
+      @params[:include] << field
       self
     end
 
     # Include the owner of the object in the parameter _owner
     # @return [Query] self
     def include_owner
-      @params["include_owner"] = true
-
+      @params[:include_owner] = true
       self
     end
 
     # Include draft objects that haven't been published yet
     # @return [Query] self
     def include_drafts
-      @params["include_unpublished"] = true
-
+      @params[:include_unpublished] = true
       self
     end
 
     # Include the schema of the class in the result
     # @return [Query] self
     def include_schema
-      @params["include_schema"] = true
-
+      @params[:include_schema] = true
       self
     end
 
@@ -305,28 +281,21 @@ module Built
   class QueryResponse
     # Get objects in the response
     # @return [Array] objects
-    def objects
-      @objects
-    end
+    attr_reader :objects
 
     # Get the count of objects
     # @return [Number] count
-    def count
-      @count
-    end
+    attr_reader :count
 
     # Get the included schema
     # @return [Hash] schema
-    def schema
-      @schema
-    end
+    attr_reader :schema
 
     private
 
     def initialize(response, class_uid)
-      @response   = response
+      @response = response
 
-      obj_class   = Built::Object
       case class_uid
       when Built::USER_CLASS_UID
         obj_class = Built::User
@@ -334,22 +303,22 @@ module Built
         obj_class = Built::Role
       when Built::INST_CLASS_UID
         obj_class = Built::Installation
-      end
-
-      if response["objects"].is_a?(Array)
-        @objects  = response["objects"].map {|o| obj_class.new(class_uid).instantiate(o)}
       else
-        @objects  = []
-        @count    = response["objects"]
+        obj_class = Built::Object
       end
 
-      if response["count"]
-        @count    = response["count"]
+      if response[:objects].is_a?(Array)
+        @objects = response[:objects].map { |o|
+          obj_class.new(class_uid).instantiate(o)
+        }
+      else
+        # TODO: Investigate this... looks fishy
+        @objects = []
+        @count = response[:objects]
       end
 
-      if response["schema"]
-        @schema   = response["schema"]
-      end
+      @count = response[:count] unless Util.blank?(response[:count])
+      @schema = response[:schema] unless Util.blank?(response[:schema])
     end
   end
 end

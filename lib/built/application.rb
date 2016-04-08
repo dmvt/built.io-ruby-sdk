@@ -1,21 +1,8 @@
 module Built
-  class Application < DirtyHashy
-    include Built::Timestamps
-
-    # Get the uid of this application
-    def uid
-      self["uid"]
-    end
-
-    # Get the name of this application
-    def name
-      self["name"]
-    end
-
-    # Get the api_key of this application
-    def api_key
-      self["api_key"]
-    end
+  class Application < BasicObject
+    proxy_method :api_key
+    proxy_method :name
+    proxy_method :uid
 
     private
 
@@ -25,24 +12,20 @@ module Built
 
     class << self
       def instantiate(data)
-        doc = new
-        doc.replace(data)
-        doc.clean_up!
-        doc
+        new(data)
       end
 
       # Get the application you are working with
       # @return [Application]
       def get
         instantiate(
-          Built.client.request(uri)
-            .json["application"]
+          Built.client.request(uri).json[:application]
         )
       end
 
       # @api private
       def uri
-        "/applications/myapp" # no longer require a valid uid to get the application
+        "/applications/myapp"
       end
     end
   end
