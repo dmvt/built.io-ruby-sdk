@@ -1,6 +1,4 @@
 require "i18n"
-require "rest-client"
-require "dirty_hashy"
 
 module Built
   class << self
@@ -29,7 +27,7 @@ module Built
         raise BuiltError, I18n.t(
           "required_parameter", {:param => "application_api_key"})
       end
-      
+
       # create the client
       @@client = Client.new({
         host:                 host,
