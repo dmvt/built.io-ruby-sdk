@@ -2,6 +2,7 @@ require "uri"
 
 module Built
   class Upload < BasicObject
+    include ACL::Helper
     include Instantiate
     include Tags
 
@@ -84,25 +85,6 @@ module Built
     def initialize(uid = nil)
       self.uid = uid if uid
       clean_up!
-      self
-    end
-
-    # Get ACL
-    # @return [ACL]
-    def ACL
-      Built::ACL.new(self["ACL"])
-    end
-
-    # Set ACL
-    # @param [ACL] acl
-    def ACL=(acl)
-      self["ACL"] = {
-        "disable" => acl.disabled,
-        "others" => acl.others,
-        "users" => acl.users,
-        "roles" => acl.roles
-      }
-
       self
     end
 

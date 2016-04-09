@@ -1,6 +1,7 @@
 module Built
   # Built::Object is the unit of data in built.io
   class Object < BasicObject
+    include ACL::Helper
     include Instantiate
     include Tags
 
@@ -239,26 +240,6 @@ module Built
     def location=(loc)
       Util.type_check("loc", loc, Location)
       self[Built::LOCATION_PATH] = loc.to_arr
-      self
-    end
-
-    # Get ACL
-    # @return [ACL]
-    def ACL
-      Built::ACL.new(self["ACL"])
-    end
-
-    # Set ACL
-    # @param [ACL] acl
-    # @return [Object] self
-    def ACL=(acl)
-      self["ACL"] = {
-        "disable" => acl.disabled,
-        "others" => acl.others,
-        "users" => acl.users,
-        "roles" => acl.roles
-      }
-
       self
     end
 

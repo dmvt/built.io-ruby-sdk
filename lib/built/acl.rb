@@ -1,5 +1,27 @@
 module Built
   class ACL
+    module Helper
+      # Get ACL
+      # @return [ACL]
+      def ACL
+        Built::ACL.new(self["ACL"])
+      end
+
+      # Set ACL
+      # @param [ACL] acl
+      # @return [Object] self
+      def ACL=(acl)
+        self["ACL"] = {
+          "disable" => acl.disabled,
+          "others" => acl.others,
+          "users" => acl.users,
+          "roles" => acl.roles
+        }
+
+        self
+      end
+    end
+
     attr_accessor :disabled
     attr_accessor :others
     attr_accessor :users
