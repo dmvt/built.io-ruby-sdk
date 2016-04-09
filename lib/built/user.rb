@@ -110,7 +110,10 @@ module Built
     # Update the user profile
     def update_user
       data = { self.class.user_wrapper => wrap.delete(:object) }
-      response = Built.client.request(uri, :put, data).json[self.class.user_wrapper]
+      response = Built
+        .client
+        .request(uri, :put, data)
+        .json[self.class.user_wrapper]
       instantiate(response)
       self
     end

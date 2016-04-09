@@ -35,8 +35,6 @@ module Built
     # @raise BuiltAPIError
     # @return [Object] self
     def save(options={})
-      # TODO: This isn't going to work right now... need to allow client to
-      # handle non-JSON posting
       header = {"Content-Type" => "multipart/form-data"}
 
       if is_new?

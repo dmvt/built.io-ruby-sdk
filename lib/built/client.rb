@@ -30,7 +30,9 @@ module Built
     end
 
     def build_headers(request, headers = {})
-      headers["Content-Type"] = "application/json"
+      unless headers.has_key?("Content-Type")
+        headers["Content-Type"] = "application/json"
+      end
       headers[:application_api_key] = @api_key
       headers[:authtoken] = @authtoken unless Util.blank?(@authtoken)
       headers[:master_key] = @master_key unless Util.blank?(@master_key)
@@ -40,7 +42,14 @@ module Built
     # perform a regular request
     def request(uri, method = :get, body = nil, query = nil, headers = {})
       response = api_request(uri, method, query, headers) { |req|
-        req.body = Oj.dump(body, :mode => :compat) unless Util.blank?(body)
+        unless Util.blank?(body)
+          if req.headers["Content-Type"] == "application/json" and
+             body.kind_of?(Hash)
+            req.body = Oj.dump(body, :mode => :compat)
+          else
+            req.body = body
+          end
+        end
       }
 
       Response.new(response)
