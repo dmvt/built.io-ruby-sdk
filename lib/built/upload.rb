@@ -99,7 +99,7 @@ module Built
     def wrap
       data = {
         "PARAM" => Oj.dump(
-          {:upload => self.select {|key| key != :upload}}
+          {:upload => self.select {|key| key != :upload}},
           :mode => :compat
         )
       }

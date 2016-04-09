@@ -31,7 +31,7 @@ module Built
     # Utility
     def replace(other)
       clear
-      merge!(other)
+      merge!(other) unless Util.blank?(other)
     end
 
     def change(key)

@@ -6,10 +6,27 @@ module Built
     include Tags
 
     class << self
+      def find(class_uid, uid)
+        new(class_uid, uid).tap { |inst| inst.sync }
+      end
+
       # @api private
       def uri(class_uid)
         "#{Built::Class.uri(class_uid)}/objects"
       end
+    end
+
+    # Initialize a new object
+    # @param [String] class_uid The uid of the class to which this object belongs
+    # @param [String] uid The uid of an existing object, if this is an existing object
+    def initialize(class_uid, uid=nil)
+      raise BuiltError, I18n.t("objects.class_uid") if Util.blank?(class_uid)
+
+      @class_uid = class_uid
+      self.uid = uid unless Util.blank?(uid)
+
+      clean_up!
+      self
     end
 
     # Get / Set the uid for this object
@@ -272,21 +289,6 @@ module Built
     # @return [Boolean]
     def is_new?
       Util.blank?(uid)
-    end
-
-    # Initialize a new object
-    # @param [String] class_uid The uid of the class to which this object belongs
-    # @param [String] uid The uid of an existing object, if this is an existing object
-    def initialize(class_uid, uid=nil)
-      unless Util.blank?(class_uid)
-        raise BuiltError, I18n.t("objects.class_uid")
-      end
-
-      @class_uid = class_uid
-      self.uid = uid unless Util.blank?(uid)
-
-      clean_up!
-      self
     end
 
     private

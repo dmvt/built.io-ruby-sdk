@@ -1,16 +1,17 @@
-require "oj"
+require "faraday"
 
 module Built
   class Client
     attr_accessor :authtoken
     attr_accessor :current_user
+    attr_accessor :logger
 
-    def initialize(options={})
+    def initialize(options = {})
       @api_key    = options[:application_api_key]
       @master_key = options[:master_key]
       @host       = options[:host]
-      @logger     = options[:logger]
       @authtoken  = options[:authtoken]
+      self.logger = options[:logger]
     end
 
     # perform a regular request
@@ -38,7 +39,7 @@ module Built
 
       Faraday
         .new(@host) { |connection|
-          connection.response(:logger, @logger) unless Utils.blank?(@logger)
+          connection.response(:logger, @logger) unless Util.blank?(@logger)
           connection.adapter(Faraday.default_adapter)
         }
         .send(*args) { |request|
@@ -65,12 +66,10 @@ module Built
     attr_reader :headers
 
     def initialize(response)
-      response.body.rewind
       @raw      = response
       @code     = response.status
-      @body     = response.body.read
+      @body     = response.body
       @headers  = response.headers
-      response.body.rewind
     end
 
     def json

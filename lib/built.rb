@@ -1,4 +1,5 @@
 require "i18n"
+require "oj"
 
 module Built
   class << self
@@ -37,7 +38,7 @@ module Built
     # Get the singleton client
     # @api private
     def client
-      raise BuiltError, I18n.t("not_initialized") unless Util.blank?(@client)
+      raise BuiltError, I18n.t("not_initialized") if Util.blank?(@client)
       @client
     end
 
@@ -56,13 +57,13 @@ require "built/tags"
 require "built/instantiate"
 
 require "built/client"
+require "built/acl"
 require "built/basic_object"
 require "built/application"
 require "built/class"
 require "built/object"
 require "built/query"
 require "built/location"
-require "built/acl"
 require "built/user"
 require "built/role"
 require "built/installation"
