@@ -1,6 +1,16 @@
 module Built
   # Built::Object is the unit of data in built.io
   class Object < BasicObject
+    include Instantiate
+    include Tags
+
+    class << self
+      # @api private
+      def uri(class_uid)
+        "#{Built::Class.uri(class_uid)}/objects"
+      end
+    end
+
     # Get / Set the uid for this object
     # @param [String] uid A valid object uid
     proxy_method :uid, true
@@ -277,31 +287,6 @@ module Built
       self["published"]
     end
 
-    # Get tags for this object
-    def tags
-      self["tags"] || []
-    end
-
-    # Add new tags
-    # @param [Array<String>] tags An array of strings. Can also be a single tag.
-    # @return [Object] self
-    def add_tags(tags)
-      tags = tags.is_a?(Array) ? tags : [tags]
-      self["tags"] ||= []
-      self["tags"].concat(tags)
-      self
-    end
-
-    # Remove tags
-    # @param [Array<String>] tags An array of strings. Can also be a single tag.
-    # @return [Object] self
-    def remove_tags(tags)
-      tags = tags.is_a?(Array) ? tags : [tags]
-      self["tags"] ||= []
-      self["tags"] = self["tags"] - tags
-      self
-    end
-
     # Is this a new, unsaved object?
     # @return [Boolean]
     def is_new?
@@ -323,13 +308,6 @@ module Built
       self
     end
 
-    # @api private
-    def instantiate(data)
-      replace(data)
-      clean_up!
-      self
-    end
-
     private
 
     def uri
@@ -345,18 +323,6 @@ module Built
 
     def to_s
       "#<Built::Object uid=#{self[:uid]}, class_uid=#{@class_uid}>"
-    end
-
-    class << self
-      # @api private
-      def instantiate(data)
-        new(data)
-      end
-
-      # @api private
-      def uri(class_uid)
-        "#{Built::Class.uri(class_uid)}/objects"
-      end
     end
   end
 end

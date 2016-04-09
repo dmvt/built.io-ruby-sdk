@@ -13,6 +13,24 @@ module Built
       @authtoken  = options[:authtoken]
     end
 
+    # perform a regular request
+    def request(uri, method = :get, body = nil, query = nil, headers = {})
+      response = api_request(uri, method, query, headers) { |req|
+        unless Util.blank?(body)
+          if req.headers["Content-Type"] == "application/json" and
+             body.kind_of?(Hash)
+            req.body = Oj.dump(body, :mode => :compat)
+          else
+            req.body = body
+          end
+        end
+      }
+
+      Response.new(response)
+    end
+
+    private
+
     def api_request(url, method, params = nil, headers = {})
       method = method.to_s.downcase.to_sym unless method.is_a?(Symbol)
       args = [method, url]
@@ -37,22 +55,6 @@ module Built
       headers[:authtoken] = @authtoken unless Util.blank?(@authtoken)
       headers[:master_key] = @master_key unless Util.blank?(@master_key)
       headers.each { |k, v| request.headers[k] = v }
-    end
-
-    # perform a regular request
-    def request(uri, method = :get, body = nil, query = nil, headers = {})
-      response = api_request(uri, method, query, headers) { |req|
-        unless Util.blank?(body)
-          if req.headers["Content-Type"] == "application/json" and
-             body.kind_of?(Hash)
-            req.body = Oj.dump(body, :mode => :compat)
-          else
-            req.body = body
-          end
-        end
-      }
-
-      Response.new(response)
     end
   end
 

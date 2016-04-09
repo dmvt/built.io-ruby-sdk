@@ -265,9 +265,7 @@ module Built
     # Execute the query
     # @return [QueryResponse] response A hash containing the response
     def exec
-      if !@class_uid
-        raise BuiltError, I18n.t("querying.class_uid")
-      end
+      raise BuiltError, I18n.t("querying.class_uid") if Util.blank?(@class_uid)
 
       uri = Built::Object.uri(@class_uid)
 

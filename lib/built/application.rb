@@ -1,5 +1,7 @@
 module Built
   class Application < BasicObject
+    extend Instantiate::ClassMethods
+
     proxy_method :api_key
     proxy_method :name
     proxy_method :uid
@@ -11,10 +13,6 @@ module Built
     end
 
     class << self
-      def instantiate(data)
-        new(data)
-      end
-
       # Get the application you are working with
       # @return [Application]
       def get

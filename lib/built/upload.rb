@@ -2,6 +2,16 @@ require "uri"
 
 module Built
   class Upload < BasicObject
+    include Instantiate
+    include Tags
+
+    class << self
+      # @api private
+      def uri
+        "/uploads"
+      end
+    end
+
     # Get / Set the uid for this upload
     # @param [String] uid A valid upload uid
     proxy_method :uid, true
@@ -69,40 +79,10 @@ module Built
       self
     end
 
-    # Get tags for this upload
-    def tags
-      self[:tags] || []
-    end
-
-    # Add new tags
-    # @param [Array] tags An array of strings. Can also be a single tag.
-    def add_tags(tags)
-      tags = tags.is_a?(Array) ? tags : [tags]
-      self[:tags] ||= []
-      self[:tags].concat(tags)
-      self
-    end
-
-    # Remove tags
-    # @param [Array] tags An array of strings. Can also be a single tag.
-    def remove_tags(tags)
-      tags = tags.is_a?(Array) ? tags : [tags]
-      self[:tags] ||= []
-      self[:tags] = self[:tags] - tags
-      self
-    end
-
     # Initialize a new upload
     # @param [String] uid The uid of an existing upload, if this is an existing upload
     def initialize(uid = nil)
       self.uid = uid if uid
-      clean_up!
-      self
-    end
-
-    # @api private
-    def instantiate(data)
-      replace(data)
       clean_up!
       self
     end
@@ -153,17 +133,6 @@ module Built
     # @return [Boolean]
     def is_new?
       Util.blank?(uid)
-    end
-
-    class << self
-      def instantiate(data)
-        new.instantiate(data)
-      end
-
-      # @api private
-      def uri
-        "/uploads"
-      end
     end
   end
 end

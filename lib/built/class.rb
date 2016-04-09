@@ -2,11 +2,9 @@ module Built
   # Built::Class provides the schema and provides grouping for
   # different classes of objects.
   class Class < BasicObject
+    extend Instantiate::ClassMethods
+    
     class << self
-      def instantiate(data)
-        new(data)
-      end
-
       # Get all classes from built. Returns an array of classes.
       # @raise Built::BuiltAPIError
       # @return [Array] classes An array of classes
