@@ -46,7 +46,7 @@ module Built
     alias :dirty? :changed?
 
     def changes
-      @changes ||= self.class.superclass.new
+      @changes ||= {}
     end
 
     def clean_up!
