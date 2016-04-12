@@ -1,6 +1,10 @@
 module Built
   class User < Built::Object
     class << self
+      def find(uid)
+        new(uid).tap { |inst| inst.sync }
+      end
+
       # Login a user with an email and password
       # Once logged in, the user's authtoken will be used for all further requests
       # @param [String] email The user's email
