@@ -19,7 +19,7 @@ module Built
     # Initialize a new object
     # @param [String] class_uid The uid of the class to which this object belongs
     # @param [String] uid The uid of an existing object, if this is an existing object
-    def initialize(class_uid, uid=nil)
+    def initialize(class_uid, uid = nil)
       raise BuiltError, I18n.t("objects.class_uid") if Util.blank?(class_uid)
 
       @class_uid = class_uid
@@ -38,7 +38,7 @@ module Built
     # @return [Object] self
     def sync
       raise BuiltError, I18n.t("objects.uid_not_set") if Util.blank?(uid)
-      instantiate(Built.client.request(uri).json["object"])
+      instantiate(Built.client.request(uri).json[:object])
     end
 
     # Save / persist the object to built.io
@@ -60,16 +60,15 @@ module Built
         instantiate Built
           .client
           .request(uri, :post, wrap, nil, headers)
-          .json["object"]
+          .json[:object]
       else
-        # TODO: Possibly remove this... very it is needed
-        headers[:timeless] = true if options[:timeless]
+        headers["timeless"] = true if options[:timeless]
 
         # update
         instantiate Built
           .client
           .request(uri, :put, wrap, nil, headers)
-          .json["object"]
+          .json[:object]
       end
 
       self
@@ -262,27 +261,27 @@ module Built
 
     # Get the version this object is on
     def version
-      self["_version"]
+      self[:_version]
     end
 
     # Unpublish this object
     # @return [Object] self
     def unpublish
-      self["published"] = false
+      self[:published] = false
       self
     end
 
     # Publish this object
     # @return [Object] self
     def publish
-      self["published"] = true
+      self[:published] = true
       self
     end
 
     # Is this object published?
     # @return [Boolean]
     def is_published?
-      self["published"]
+      self[:published]
     end
 
     # Is this a new, unsaved object?

@@ -1,5 +1,3 @@
-require "faraday"
-
 module Built
   class Client
     attr_accessor :authtoken
@@ -38,9 +36,9 @@ module Built
       args << params unless Util.blank?(params)
 
       Faraday
-        .new(@host) { |connection|
-          connection.response(:logger, @logger) unless Util.blank?(@logger)
-          connection.adapter(Faraday.default_adapter)
+        .new(@host) { |conn|
+          conn.response(:built_logger, @logger) unless Util.blank?(@logger)
+          conn.adapter(Faraday.default_adapter)
         }
         .send(*args) { |request|
           build_headers(request, headers)
@@ -52,9 +50,9 @@ module Built
       unless headers.has_key?("Content-Type")
         headers["Content-Type"] = "application/json"
       end
-      headers[:application_api_key] = @api_key
-      headers[:authtoken] = @authtoken unless Util.blank?(@authtoken)
-      headers[:master_key] = @master_key unless Util.blank?(@master_key)
+      headers["application_api_key"] = @api_key
+      headers["authtoken"] = @authtoken unless Util.blank?(@authtoken)
+      headers["master_key"] = @master_key unless Util.blank?(@master_key)
       headers.each { |k, v| request.headers[k] = v }
     end
   end
