@@ -50,6 +50,7 @@ module Built
 end
 
 require "built/constants"
+require "built/logging"
 require "built/i18n"
 require "built/util"
 require "built/error"

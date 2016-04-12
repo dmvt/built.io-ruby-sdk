@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency "i18n"
   s.add_dependency "faraday", "~> 0.9"
+  s.add_dependency "faraday-detailed_logger", "~> 1.0"
   s.add_dependency "oj", "~> 2"
 
   # TODO: bring back testing
