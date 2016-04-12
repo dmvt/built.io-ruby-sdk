@@ -25,10 +25,16 @@ module Built
     # Where given field matches value
     # @param [String] field The field on which to search
     # @param [Object] value The value with which to match
+    # OR:
+    # @param [Hash] field => value
     # @return [Query] self
-    def where(field, value)
-      @params[:query][field] = value
-      self
+    def where(field, value = nil)
+      if field.is_a?(Hash)
+        field.inject(self) { |result, pair| result.where(*pair) }
+      else
+        @params[:query][field] = value
+        self
+      end
     end
 
     # To check that the field has a value greater than the one specified
