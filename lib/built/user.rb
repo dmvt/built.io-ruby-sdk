@@ -62,6 +62,10 @@ module Built
         {user_wrapper => self.select { |o| changed_keys.include?(o) }}
       end
 
+      def uri
+        super(Built::USER_CLASS_UID)
+      end
+
       def users_uri
         "/application/users"
       end
