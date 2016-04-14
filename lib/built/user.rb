@@ -5,6 +5,14 @@ module Built
         new(uid).tap { |inst| inst.sync }
       end
 
+      # Login a user via the master key
+      # @param [String] uid The user's UID
+      # @return [Object] user
+      def generate_authtoken(uid)
+        new(uid).generate_authtoken
+      end
+      alias_method :login_with_anyauth, :generate_authtoken
+
       # Login a user with an email and password
       # Once logged in, the user's authtoken will be used for all further requests
       # @param [String] email The user's email
@@ -81,6 +89,10 @@ module Built
       def current_uri
         "#{users_uri}/current"
       end
+
+      def generate_authtoken_uri
+        "#{users_uri}/generate_authtoken"
+      end
     end
 
     # Create a new user object
@@ -97,7 +109,29 @@ module Built
 
     # Get the authtoken for this user
     def authtoken
-      @authtoken
+      @authtoken || self[:authtoken]
+    end
+
+    # Generate an authtoken for this user
+    def generate_authtoken(insert = false, updates = {})
+      if insert.is_a?(Hash)
+        updates = insert
+        insert = false
+      end
+
+      data = {
+        self.class.user_wrapper => updates,
+        :query => self,
+        :insert => insert
+      }
+
+      response = Built
+        .client
+        .request(self.class.generate_authtoken_uri, :post, data)
+        .json[self.class.user_wrapper]
+
+      instantiate(response)
+      self
     end
 
     # Logout a user
