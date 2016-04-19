@@ -275,8 +275,12 @@ module Built
 
       uri = Built::Object.uri(@class_uid)
 
+      payload = @params.dup
+      query = payload.delete(:query)
+      payload[:query] = Oj.dump(query, :mode => :compat)
+
       QueryResponse.new(
-        Built.client.request(uri, :get, nil, @params).json,
+        Built.client.request(uri, :get, nil, payload).json,
         @class_uid
       )
     end
@@ -300,7 +304,7 @@ module Built
     def initialize(response, class_uid)
       @response = response
 
-      case class_uid
+      case class_uid.to_s
       when Built::USER_CLASS_UID
         obj_class = Built::User
       when Built::ROLE_CLASS_UID
