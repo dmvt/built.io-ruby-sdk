@@ -31,7 +31,8 @@ module Built
     # Utility
     def replace(other)
       clear
-      merge!(other) unless Util.blank?(other)
+      merge!(other) if other.is_a?(Hash)
+      self
     end
 
     def change(key)
@@ -56,6 +57,7 @@ module Built
 
     def clear
       keys.each { |key| delete(key) }
+      self
     end
 
     def delete(key)
@@ -86,6 +88,7 @@ module Built
 
     def update(other)
       other.each { |key, value| store(key, value) }
+      self
     end
 
     def was(key)
