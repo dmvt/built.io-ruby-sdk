@@ -4,7 +4,7 @@ module Built
       # Get ACL
       # @return [ACL]
       def ACL
-        Built::ACL.new(self["ACL"])
+        Built::ACL.new(self[:ACL], self[:app_user_object_uid])
       end
 
       # Set ACL
@@ -27,9 +27,10 @@ module Built
     attr_accessor :users
     attr_accessor :roles
 
-    def initialize(data)
+    def initialize(data, uid)
       data ||= {}
 
+      @uid = uid
       @disabled = data[:disable] == true
       @others = data[:others] || {}
       @users = data[:users] || []
@@ -204,13 +205,15 @@ module Built
     end
 
     def can_user_op(user, op)
+      uid = user.is_a?(String) ? user : user.uid
+      return true if uid == @uid
       can_elem_op(@users, user, op)
     end
 
     def can_elem_op(store, elem, op)
       uid = elem.is_a?(String) ? elem : elem.uid
       acl = store.find {|u| u == uid} || {}
-      acl[op]
+      acl[op] || false
     end
   end
 end
