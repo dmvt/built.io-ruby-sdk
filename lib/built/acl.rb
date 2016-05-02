@@ -176,11 +176,11 @@ module Built
       role_op(role, :delete, bool)
     end
 
-    private
-
     def to_s
       "#<Built::ACL disabled=#{disabled}>"
     end
+
+    private
 
     def user_op(user, op, bool)
       elem_op(@users, user, op, bool)
@@ -193,11 +193,13 @@ module Built
     def elem_op(store, elem, op, bool)
       uid = elem.is_a?(String) ? elem : elem.uid
 
-      if acl = store.find {|u| u == uid}
+      if acl = store.find {|u| u[:uid] == uid}
         acl[op] = bool
       else
         store << {:uid => uid, op => bool}
       end
+
+      store
     end
 
     def can_role_op(role, op)
@@ -212,7 +214,7 @@ module Built
 
     def can_elem_op(store, elem, op)
       uid = elem.is_a?(String) ? elem : elem.uid
-      acl = store.find {|u| u == uid} || {}
+      acl = store.find {|u| u[:uid] == uid} || {}
       acl[op] || false
     end
   end
