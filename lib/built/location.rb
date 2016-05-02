@@ -1,72 +1,90 @@
 module Built
-  # This is used to specify a long/lat pair in built.io
+  # This is used to specify a lng/lat pair in built.io
   class Location
-    attr_accessor :long
+    attr_accessor :lng
+    alias_method :longitude, :lng
+    alias_method :longitude=, :lng=
     attr_accessor :lat
+    alias_method :latitude, :lat
+    alias_method :latitude, :lat=
+
+    # Legacy support
+    alias_method :long, :lng
+    alias_method :long=, :lng=
 
     # Create a new Location object
-    # @param [Float] long Longitude of the location
+    # @param [Float] lng Longitude of the location
     # @param [Float] lat Latitude of the location
     # @return [Location] location A new location
-    def initialize(long, lat)
-      Util.type_check("long", long, Float)
-      Util.type_check("lat", lat, Float)
+    def initialize(lng, lat)
+      Util.type_check("lng", lng, Numeric)
+      Util.type_check("lat", lat, Numeric)
 
-      @long = long
-      @lat  = lat
+      self.lng = lng.to_f
+      self.lat = lat.to_f
     end
 
     # Distance in meters from a certain location
     # @param [Location] location The location
     # @return [Integer] distance in meters
-    def metersFrom(location)
+    def meters_from(location)
       Util.type_check("location", location, Location)
 
-      haversine(location.lat, location.long, lat, long, 1000)
+      distance(location.lat, location.lng)
     end
 
     # Distance in kilometers from a certain location
     # @param [Location] location The location
     # @return [Integer] distance in kilometers
-    def kilometersFrom(location)
+    def kilometers_from(location)
       Util.type_check("location", location, Location)
 
-      haversine(location.lat, location.long, lat, long, 1)
+      distance(location.lat, location.lng) / 1000
     end
 
-    # Convert this into an array of [long, lat]
+    # Convert this into an array of [lng, lat]
+    # to match the API :(
     # @return [Array<Float, Float>]
     def to_arr
-      [long, lat]
+      [lng, lat]
+    end
+
+    # Convert this into an array of [lat, lng]
+    # @return [Array<Float, Float>]
+    def to_a
+      [lat, lng]
     end
 
     private
 
     def to_s
-      "#<Built::Object long=#{long}, lat=#{lat}>"
+      "#<Built::Object lat=#{lat}, lng=#{lng}>"
     end
 
     def power(num, pow)
       num ** pow
     end
 
-    def haversine(lat1, long1, lat2, long2, factor)
-      dtor = Math::PI/180
-      r = 6378.14*factor
-     
-      rlat1 = lat1 * dtor 
-      rlong1 = long1 * dtor 
-      rlat2 = lat2 * dtor 
-      rlong2 = long2 * dtor 
-     
-      dlon = rlong1 - rlong2
-      dlat = rlat1 - rlat2
-     
-      a = power(Math::sin(dlat/2), 2) + Math::cos(rlat1) * Math::cos(rlat2) * power(Math::sin(dlon/2), 2)
+    # credit: http://stackoverflow.com/questions/12966638/how-to-calculate-the-distance-between-two-gps-coordinates-without-using-google-m
+    def distance(remote_lat, remote_lng)
+      rad_per_deg = Math::PI/180  # PI / 180
+      rkm = 6371                  # Earth radius in kilometers
+      rm = rkm * 1000             # Radius in meters
+
+      dlat_rad = (remote_lat-lat) * rad_per_deg  # Delta, converted to rad
+      dlng_rad = (remote_lng-lng) * rad_per_deg
+
+      lat1_rad = lat * rad_per_deg
+      lat2_rad = remote_lat * rad_per_deg
+
+      a = Math.sin(dlat_rad/2)**2 +
+          Math.cos(lat1_rad) *
+          Math.cos(lat2_rad) *
+          Math.sin(dlng_rad/2)**2
+
       c = 2 * Math::atan2(Math::sqrt(a), Math::sqrt(1-a))
-      d = r * c
-     
-      return d.ceil
+
+      rm * c # Delta in meters
     end
   end
 end

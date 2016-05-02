@@ -3,6 +3,8 @@
 built.io is a Backend-as-a-Service. This is the ruby SDK providing convenient
 wrappers for working with built.io.
 
+WARNING: This gem is no longer officially supported by Built IO.
+
 ## Installing
 
 ```ruby
@@ -15,10 +17,18 @@ Call the `init` method on `Built` to initialize the SDK with your
 application's api_key:
 
 ```ruby
-Built.init :application_api_key => "<your api key>"
+Built.init(
+  :application_api_key => "<your api key>",
+  :master_key => "<your master key>"
+)
 ```
 
 ## Objects
+
+### Retrieve an object
+```ruby
+obj = Built::Object.fetch("people", "bltMyU1d")
+```
 
 ### Create an object
 
@@ -57,7 +67,7 @@ obj.destroy
 ## Querying objects
 
 ```ruby
-query = Query.new("people")
+query = Built::Query.new("people")
 query
   .containedIn("name", ["James"])
   .greaterThan("age", 30)

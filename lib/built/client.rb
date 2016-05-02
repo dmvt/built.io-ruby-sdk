@@ -2,55 +2,58 @@ module Built
   class Client
     attr_accessor :authtoken
     attr_accessor :current_user
+    attr_accessor :logger
 
-    def initialize(options={})
+    def initialize(options = {})
       @api_key    = options[:application_api_key]
       @master_key = options[:master_key]
       @host       = options[:host]
-      @version    = options[:version]
       @authtoken  = options[:authtoken]
-
-      # set the base uri
-      @base_uri = @version ? [@host, @version].join('/') : @host
+      self.logger = options[:logger]
     end
 
     # perform a regular request
-    def request(uri, method=:get, body=nil, query=nil, additionalHeaders={})
-      options             = {}
-      options[:url]       = @base_uri + uri
-      options[:method]    = method
-
-      options[:headers]   = {
-        "application_api_key" => @api_key,
-        "Content-Type"        => "application/json"
+    def request(uri, method = :get, body = nil, query = nil, headers = {})
+      response = api_request(uri, method, query, headers) { |req|
+        unless Util.blank?(body)
+          if req.headers["Content-Type"] == "application/json" and
+             body.kind_of?(Hash)
+            req.body = Oj.dump(body, :mode => :compat)
+          else
+            req.body = body
+          end
+        end
       }
 
-      options[:headers][:params] = query if query
+      Response.new(response)
+    end
 
-      options[:headers][:authtoken]   = @authtoken if @authtoken
-      options[:headers][:master_key]  = @master_key if @master_key
-      options[:headers].merge!(additionalHeaders)
+    private
 
-      if body
-        is_json = options[:headers]["Content-Type"] == "application/json"
-        options[:payload] = is_json ? body.to_json : body
-        unless is_json
-          options[:headers].delete("Content-Type")
-        end
+    def api_request(url, method, params = nil, headers = {})
+      method = method.to_s.downcase.to_sym unless method.is_a?(Symbol)
+      args = [method, url]
+      args << params unless Util.blank?(params)
+
+      Faraday
+        .new(@host) { |conn|
+          conn.response(:built_logger, @logger) unless Util.blank?(@logger)
+          conn.adapter(Faraday.default_adapter)
+        }
+        .send(*args) { |request|
+          build_headers(request, headers)
+          yield(request) if block_given?
+        }
+    end
+
+    def build_headers(request, headers = {})
+      unless headers.has_key?("Content-Type")
+        headers["Content-Type"] = "application/json"
       end
-
-      begin
-        response = Response.new(RestClient::Request.execute(options))
-      rescue => e
-        response = Response.new(e.response)
-      end
-
-      if !(200..299).include?(response.code)
-        # error, throw it
-        raise BuiltAPIError.new(response.json)
-      end
-
-      response
+      headers["application_api_key"] = @api_key
+      headers["authtoken"] = @authtoken unless Util.blank?(@authtoken)
+      headers["master_key"] = @master_key unless Util.blank?(@master_key)
+      headers.each { |k, v| request.headers[k] = v }
     end
   end
 
@@ -62,13 +65,13 @@ module Built
 
     def initialize(response)
       @raw      = response
-      @code     = response.code
+      @code     = response.status
       @body     = response.body
       @headers  = response.headers
     end
 
     def json
-      JSON.parse @body
+      Oj.load @body, :symbol_keys => true
     end
   end
 end
